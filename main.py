@@ -3,8 +3,8 @@ from binance.client import Client
 from binance import BinanceSocketManager
 from binance.enums import *
 
-testnet_key = 'H0KabgOky36tbSXjTbSPc3kd9xR3f3WSqs5snBJI3wmy7gTOOxmumRDWKdysnZXA'
-testnet_secret_key = '8OKUmARWUoWkNMkIRo8lU8DlIPJkcxhqXPejvCOtDxcvT1xct8iat7MII138TauV'
+testnet_key = 'your_testnet_key'
+testnet_secret_key = 'your_testnet_secret_key'
 
 client = Client(testnet_key, testnet_secret_key, testnet=True)
 
