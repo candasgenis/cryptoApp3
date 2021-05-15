@@ -4,8 +4,8 @@ from binance import BinanceSocketManager
 from binance.enums import *
 import time
 
-testnet_key = 'H0KabgOky36tbSXjTbSPc3kd9xR3f3WSqs5snBJI3wmy7gTOOxmumRDWKdysnZXA'
-testnet_secret_key = '8OKUmARWUoWkNMkIRo8lU8DlIPJkcxhqXPejvCOtDxcvT1xct8iat7MII138TauV'
+testnet_key = 'your_key'
+testnet_secret_key = 'your_secret_key'
 
 class Binance:
     def __init__(self, public_key = testnet_key, secret_key = testnet_secret_key, sync = False):
