@@ -34,12 +34,12 @@ account_info = my_binance.synced('get_account', recvWindow=60000)
 
 #Market Data Endpoints
 #depth = client.get_order_book(symbol='XRPBUSD')
-#res = client.get_exchange_info()
+res = client.get_exchange_info()
 #time_res = client.get_server_time()
 #status = client.get_system_status()
-symbol_info = client.get_symbol_info('XRPBTC')
-#allcoins_info = client.get_all_tickers()
-avg_price = client.get_avg_price(symbol='XRPBTC')
+symbol_info = client.get_symbol_info('XRPBUSD')
+allcoins_info = client.get_all_tickers()
+avg_price = client.get_avg_price(symbol='XRPBUSD')
 #prices = client.get_all_tickers()
 #orderbook_tickers = client.get_orderbook_tickers()
 #candles = client.get_klines(symbol='BTCBUSD', interval=Client.KLINE_INTERVAL_5MINUTE)
@@ -49,13 +49,24 @@ avg_price = client.get_avg_price(symbol='XRPBTC')
 #balance = client.get_asset_balance(asset='BTC')
 #open order
 """order = client.create_order(
-    symbol='BTCBUSD',
-    side=SIDE_BUY,
-    type=ORDER_TYPE_LIMIT,
-    timeInForce=TIME_IN_FORCE_GTC,
-    quantity=0.001,
-    price=10000
+    symbol='XRPBUSD',
+    side=SIDE_SELL,
+    type=ORDER_TYPE_MARKET,
+    quantity=20,
     )"""
+
+"""price = float(order['fills'][0]['price'])
+pprint.pprint(price)"""
+print("************************************************")
+
+
+for coin in allcoins_info:
+    if coin['symbol'] == 'XRPBUSD':
+        our_price = coin['price']
+
+print(our_price)
+print("**********************************************")
+
 #orders = client.get_all_orders(symbol='BTCBUSD')
 #delete order
 """result = client.cancel_order(
@@ -65,14 +76,14 @@ avg_price = client.get_avg_price(symbol='XRPBTC')
 
 #account_snapshot = client.get_account_snapshot(type='SPOT')
 
-for filter in symbol_info['filters']:
+"""for filter in symbol_info['filters']:
     if filter['filterType'] == 'PERCENT_PRICE':
         multiplierDown = float(filter['multiplierDown'])
         pprint.pprint(multiplierDown)
         multiplierUp = float(filter['multiplierUp'])
-        pprint.pprint(multiplierUp)
+        pprint.pprint(multiplierUp)"""
 
-pprint.pprint(avg_price)
+pprint.pprint(allcoins_info)
 
 """for asset in account_info['balances']:
     symbol_in_wallet = asset['asset']

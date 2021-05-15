@@ -14,8 +14,6 @@ app = Flask(__name__)
 @app.route('/openLimitOrder', methods=['POST'])
 def open_limit_order():
     try:
-
-
         symbol = request.form.get("symbol")
         symbol_info = client.get_symbol_info(symbol)
 
@@ -53,7 +51,7 @@ def open_limit_order():
 
 
         if side == SIDE_BUY:
-            if (multiplication > 10) and (quantity > minQty) and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price):
+            if (multiplication >= 10.0) and (quantity > minQty) and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price):
                 order = client.create_order(
                     symbol=symbol,
                     side=side,
@@ -69,7 +67,7 @@ def open_limit_order():
             else:
                 return jsonify({'status': 'doesnt meet requirements'})
         elif side == SIDE_SELL:
-            if (quantity < freeQty) and (quantity > minQty) and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price):
+            if (multiplication >= 10.0) and (quantity < freeQty) and (quantity > minQty) and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price):
                 order = client.create_order(
                     symbol=symbol,
                     side=side,
@@ -83,12 +81,85 @@ def open_limit_order():
             elif (avg_price*multiplierUp <= price) or (avg_price*multiplierDown >= price):
                 return jsonify({'status': 'PRICE FILTER ERROR'})
             else:
-                return jsonify({'status': 'doesnt meet requirements'})
+                return jsonify({'status': 'does not meet requirements'})
 
 
 
     except Exception as E:
         print(f"[AN ERROR HAS OCCURRED WITH :]{E}")
+
+@app.route('/openMarketOrder', methods=['POST'])
+def open_market_order():
+    try:
+        allcoins_info = client.get_all_tickers()
+
+        symbol = request.form.get("symbol")
+        symbol_info = client.get_symbol_info(symbol)
+
+        print('symbol: ' + symbol[:-4])
+        balance = client.get_asset_balance(asset=symbol[:-4])
+        freeQty = float(balance['free'])
+        print('freeQty: ', freeQty)
+        quantity = float(request.form.get("quantity"))
+        print('quantity: ', quantity)
+        #multiplication = quantity * price
+        #print('multiplication: ', multiplication)
+
+        minQty = float(symbol_info['filters'][2]['minQty'])
+        print('minQty: ', minQty)
+        maxQty = float(symbol_info['filters'][2]['maxQty'])
+        print('maxQty: ', maxQty)
+
+        if request.form.get("side") == "buy":
+            side = SIDE_BUY
+        elif request.form.get("side") == "sell":
+            side = SIDE_SELL
+        print('side: ', side)
+
+        if side == SIDE_BUY:
+            if (quantity > minQty) and (quantity < maxQty):
+                for coin in allcoins_info:
+                    if coin['symbol'] == symbol:
+                        coin_price = float(coin['price'])
+                        print('coin price: ', coin_price)
+                if coin_price*quantity >= 10.0:
+                    order = client.create_order(
+                        symbol=symbol,
+                        side=SIDE_BUY,
+                        type=ORDER_TYPE_MARKET,
+                        quantity=quantity,
+                    )
+                    pprint.pprint(order)
+                    return jsonify({'status': 'order placed'})
+                else:
+                    return jsonify({'status': 'must bid at least 10 dollar worth of coins'})
+            else:
+                return jsonify({'status': 'does not meet requirements'})
+        elif side == SIDE_SELL:
+            if (quantity < freeQty) and (quantity > minQty) and (quantity < maxQty):
+                for coin in allcoins_info:
+                    if coin['symbol'] == symbol:
+                        coin_price = float(coin['price'])
+                        print('coin price: ', coin_price)
+                    pprint.pprint(coin)
+                if coin_price * quantity >= 10.0:
+                    order = client.create_order(
+                        symbol=symbol,
+                        side=SIDE_SELL,
+                        type=ORDER_TYPE_MARKET,
+                        quantity=quantity,
+                    )
+                    pprint.pprint(order)
+                    return jsonify({'status': 'order placed'})
+                else:
+                    return jsonify({'status': 'must bid at least 10 dollar worth of coins'})
+            else:
+                return jsonify({'status': 'does not meet requirements'})
+
+    except Exception as E:
+        print(f"[AN ERROR HAS OCCURRED WITH :]{E}")
+
+
 
 
 
