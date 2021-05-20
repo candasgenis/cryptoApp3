@@ -1,11 +1,14 @@
 import pprint
 from binance.client import Client
-from binance import BinanceSocketManager
 from binance.enums import *
 import time
+import asyncio
+from binance import AsyncClient, BinanceSocketManager
+from binance import ThreadedWebsocketManager
+import config
 
-testnet_key = 'your_key'
-testnet_secret_key = 'your_secret_key'
+testnet_key = config.testnet_key
+testnet_secret_key = config.testnet_secret_key
 
 class Binance:
     def __init__(self, public_key = testnet_key, secret_key = testnet_secret_key, sync = False):
@@ -25,6 +28,21 @@ class Binance:
         args['timestamp'] = int(time.time() * 1000 + self.time_offset)
         return getattr(self.b, fn_name)(**args)
 
+"""async def main():
+    client = await AsyncClient.create()
+    bm = BinanceSocketManager(client)
+    # start any sockets here, i.e a trade socket
+    ts = bm.trade_socket('BTCBUSD')
+    # then start receiving messages
+    async with ts as tscm:
+        while True:
+            res = await tscm.recv()
+            print(res)
+
+    await client.close_connection()"""
+
+
+
 
 client = Client(testnet_key, testnet_secret_key, testnet=True)
 my_binance = Binance(testnet_key, testnet_secret_key, True)
@@ -37,7 +55,7 @@ account_info = my_binance.synced('get_account', recvWindow=60000)
 res = client.get_exchange_info()
 #time_res = client.get_server_time()
 #status = client.get_system_status()
-symbol_info = client.get_symbol_info('XRPBUSD')
+symbol_info = client.get_symbol_info('BTCBUSD')
 allcoins_info = client.get_all_tickers()
 avg_price = client.get_avg_price(symbol='XRPBUSD')
 #prices = client.get_all_tickers()
@@ -46,13 +64,15 @@ avg_price = client.get_avg_price(symbol='XRPBUSD')
 
 #Account Endpoints
 #account_info = client.get_account()
-#balance = client.get_asset_balance(asset='BTC')
+balance = client.get_asset_balance(asset='XRP')
 #open order
 """order = client.create_order(
-    symbol='XRPBUSD',
-    side=SIDE_SELL,
-    type=ORDER_TYPE_MARKET,
-    quantity=20,
+    symbol='BTCBUSD',
+    side=SIDE_BUY,
+    type=ORDER_TYPE_LIMIT,
+    timeInForce=TIME_IN_FORCE_GTC,
+    quantity=0.01,
+    price=25000
     )"""
 
 """price = float(order['fills'][0]['price'])
@@ -60,14 +80,18 @@ pprint.pprint(price)"""
 print("************************************************")
 
 
-for coin in allcoins_info:
+"""for coin in allcoins_info:
     if coin['symbol'] == 'XRPBUSD':
-        our_price = coin['price']
+        our_price = coin['price']"""
 
-print(our_price)
+#print(our_price)
 print("**********************************************")
 
-#orders = client.get_all_orders(symbol='BTCBUSD')
+orders = client.get_all_orders(symbol='BTCBUSD')
+
+order = client.get_order(
+    symbol='BNBBUSD',
+    orderId='8981')
 #delete order
 """result = client.cancel_order(
     symbol='BTCBUSD',
@@ -83,7 +107,7 @@ print("**********************************************")
         multiplierUp = float(filter['multiplierUp'])
         pprint.pprint(multiplierUp)"""
 
-pprint.pprint(allcoins_info)
+#pprint.pprint(allcoins_info)
 
 """for asset in account_info['balances']:
     symbol_in_wallet = asset['asset']
@@ -97,7 +121,18 @@ if 0.0000000001 > float(symbol_info['filters'][2]['minQty']):
 else:
     print("no")"""
 
-#pprint.pprint(open_orders)
+
+pprint.pprint(order)
+
+if order['fills'][0]:
+    price = float(order['fills'][0]['price'])
+    print('FILLS PRICE: ', price)
+else:
+    price = float(order['price'])
+    print('FILLS DIŞI PRICE: ', price)
+    print("")
+"""if __name__ == "__main__":
+    loop = asyncio.get_event_loop()"""
 
 
 
