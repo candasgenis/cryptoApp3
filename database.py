@@ -208,4 +208,5 @@ if __name__ == '__main__':
     #pprint.pprint(json.loads(deposit_amount(cnx, '9EG18NMP0V', 'BNBTRX', 20)))
     #pprint.pprint(json.loads(withdraw_amount(cnx, '9EG18NMP0V', 'BNBTRX', 20)))
     #pprint.pprint(make_transaction(cnx,'9EG18NMP0V','BNB', 100 , 1, 'USDT'))
-    pprint.pprint(register_user(connection=cnx,username='Candas',password='12345'))
+    #pprint.pprint(register_user(connection=cnx,username='Candas',password='12345'))
+    pprint.pprint(deposit_amount(connection=cnx,user_id='9EG18NMP0V',symbol='BNB',amount=1000))

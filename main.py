@@ -57,7 +57,7 @@ res = client.get_exchange_info()
 #status = client.get_system_status()
 symbol_info = client.get_symbol_info('BTCBUSD')
 allcoins_info = client.get_all_tickers()
-avg_price = client.get_avg_price(symbol='XRPBUSD')
+avg_price = client.get_avg_price(symbol='BTCBUSD')
 #prices = client.get_all_tickers()
 #orderbook_tickers = client.get_orderbook_tickers()
 #candles = client.get_klines(symbol='BTCBUSD', interval=Client.KLINE_INTERVAL_5MINUTE)
@@ -122,15 +122,15 @@ else:
     print("no")"""
 
 
-pprint.pprint(order)
+pprint.pprint(avg_price)
 
-if order['fills'][0]:
+"""if order['fills'][0]:
     price = float(order['fills'][0]['price'])
     print('FILLS PRICE: ', price)
 else:
     price = float(order['price'])
     print('FILLS DIŞI PRICE: ', price)
-    print("")
+    print("")"""
 """if __name__ == "__main__":
     loop = asyncio.get_event_loop()"""
 

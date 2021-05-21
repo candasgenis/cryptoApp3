@@ -94,8 +94,8 @@ def open_limit_order():
         print(price)
 
         if side == SIDE_BUY:
-            if (transaction_amount_cash >= 10.0) and transaction_amount_cash <= wallet_amount_cash and (quantity > minQty) and (quantity < maxQty):
-                #PRICE FILTER KONTROLÜ HATALI OLDUĞU İÇİN ŞU KISMI SİLDİM: and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price)
+            if (transaction_amount_cash >= 10.0) and transaction_amount_cash <= wallet_amount_cash and (quantity > minQty) \
+                    and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price) and (price <= avg_price):
                 print('symbol: ', symbol)
                 print('side: ', side)
                 print('quantity: ',quantity)
@@ -116,20 +116,16 @@ def open_limit_order():
                     "INSERT INTO transactions (fk_user_id,order_id,transaction_symbol) VALUES(%s,%s,%s)",
                     (user_id, order_id, symbol))
                 connection.commit()
-                #deposit_asset_database = database.deposit_amount(connection=connection, user_id=user_id, symbol=asset, amount=quantity)
-                #withdraw_cash_database = database.withdraw_amount(connection=connection,user_id=user_id,symbol=cash,amount=transaction_amount_cash)
-                """transaction = database.make_transaction(connection=connection,user_id=user_id,sold_symbol=cash,buy_quantity=quantity,buy_price=price,buy_symbol=asset)
-                if transaction:
-                    return jsonify({'status': 'order placed'})
-                else:
-                    return jsonify({'status': 'database error'})"""
                 return jsonify({'status': 'order placed'})
-            #elif (avg_price*multiplierUp <= price) or (avg_price*multiplierDown >= price):
-                #return jsonify({'status': 'PRICE FILTER ERROR'})
+            elif (avg_price*multiplierUp <= price) or (avg_price*multiplierDown >= price):
+                return jsonify({'status': 'PRICE FILTER ERROR'})
+            elif price > avg_price:
+                return jsonify({'status': 'price should be smaller than average price'})
             else:
                 return jsonify({'status': 'doesnt meet requirements'})
         elif side == SIDE_SELL:
-            if (transaction_amount_cash >= 10.0) and quantity <= wallet_amount_asset and (quantity <= freeQty) and (quantity > minQty) and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price):
+            if (transaction_amount_cash >= 10.0) and quantity <= wallet_amount_asset and (quantity <= freeQty) and (quantity > minQty) \
+                    and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price) (price >= avg_price):
                 order = client.create_order(
                     symbol=symbol,
                     side=side,
@@ -142,6 +138,8 @@ def open_limit_order():
                 return jsonify({'status': 'order placed'})
             elif (avg_price*multiplierUp <= price) or (avg_price*multiplierDown >= price):
                 return jsonify({'status': 'PRICE FILTER ERROR'})
+            elif price < avg_price:
+                return jsonify({'status': 'price should be larger than average price'})
             else:
                 return jsonify({'status': 'does not meet requirements'})
 
@@ -223,13 +221,13 @@ def open_market_order():
     except Exception as E:
         print(f"[AN ERROR HAS OCCURRED WITH :]{E}")
 
-@app.route('/checkOrder', methods=['GET'])
+@app.route('/checkOrder', methods=['POST'])
 def check_order_flask():
     user_id = request.form.get('user_id')
     print(user_id)
     results = database.check_order_database(connection=connection, user_id=user_id)
     for result in results:
-        order_id = result[0]
+        order_id = int(result[0])
         print(order_id)
         symbol = result[1]
         print(symbol)
@@ -240,34 +238,44 @@ def check_order_flask():
         asset = symbol[:-4]
         cash = symbol[-4:]
         quantity = float(order['origQty'])
-        if order['fills'][0]:
+        """if order['fills'][0]:
             price = float(order['fills'][0]['price'])
             print('FILLS PRICE: ', price)
         else:
             price = float(order['price'])
             print('FILLS DIŞI PRICE: ', price)
-            print("")
+            print("")"""
+        price = float(order['price'])
+        print('order[status]: ', order['status'])
+        print('order[symbol]: ', order['symbol'])
+        print('order[orderId]: ', order['orderId'])
+        if order['status'] == 'FILLED' and order['symbol'] == symbol and order['orderId'] == order_id:
+            print('big if block entered')
+            if order['side'] == 'BUY':
+                transaction = database.make_transaction(connection=connection, user_id=user_id, sold_symbol=cash,
+                                                        buy_quantity=quantity, buy_price=price, buy_symbol=asset)
+                if transaction:
+                    cursor = connection.cursor(buffered=True)
+                    cursor.execute('DELETE FROM transactions WHERE order_id=%s;',(order_id,))
+                    connection.commit()
+                    print('transaction happened and order deleted from db(buy)')
+                else:
+                    print('transaction did not happened(buy)')
+            elif order['side'] == 'SELL':
+                transaction = database.make_transaction(connection=connection, user_id=user_id, sold_symbol=asset,
+                                                        buy_quantity=quantity, buy_price=price, buy_symbol=cash)
+                if transaction:
+                    cursor = connection.cursor(buffered=True)
+                    cursor.execute('DELETE FROM transactions WHERE order_id=%s;', (order_id,))
+                    connection.commit()
+                    print('transaction happened and order deleted from db(sell)')
+                else:
+                    print('transaction did not happened(sell)')
 
-    if order['status'] == 'FILLED' and order['symbol'] == 'BTCBUSD' and order['orderId'] == order_id:
-        if order['side'] == 'BUY':
-            transaction = database.make_transaction(connection=connection, user_id=user_id, sold_symbol=cash,
-                                                    buy_quantity=quantity, buy_price=price, buy_symbol=asset)
-            if transaction:
-                return jsonify({'status': 'check_order_flask buy transaction success'})
-            else:
-                return jsonify({'status': 'check_order_flask buy transaction failure'})
-        elif order['side'] == 'SELL':
-            transaction = database.make_transaction(connection=connection, user_id=user_id, sold_symbol=asset,
-                                                    buy_quantity=quantity, buy_price=price, buy_symbol=cash)
-            if transaction:
-                return jsonify({'status': 'check_order_flask sell transaction success'})
-            else:
-                return jsonify({'status': 'check_order_flask sell transaction failure'})
+        else:
+            print('no filled order')
 
-    else:
-        return jsonify({'status': 'Not Filled'})
-
-
+    return jsonify({'status': 'ALL TRANSACTIONS ARE DONE'})
 
 
 
