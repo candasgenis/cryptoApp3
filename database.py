@@ -165,7 +165,7 @@ def withdraw_amount(connection, user_id, symbol, amount):
         print("Error : {}".format(E))
 
 
-def make_transaction(connection, user_id, sold_symbol, buy_quantity, buy_price, buy_symbol):
+"""def make_transaction(connection, user_id, sold_symbol, buy_quantity, buy_price, buy_symbol):
     try:
         cursor = connection.cursor(buffered=True)
         sql = "SELECT wallet_quantity,pk_wallet FROM wallets WHERE wallet_id=(SELECT user_wallet FROM users WHERE user_id=%s) AND wallet_symbol=%s OR wallet_symbol=%s"
@@ -179,7 +179,54 @@ def make_transaction(connection, user_id, sold_symbol, buy_quantity, buy_price, 
         else:
             return json.dumps({"status": "Not enough quantity"})
     except Exception as E:
-        print("Error : {}".format(E))
+        print("Error : {}".format(E))"""
+
+def buy_transaction(connection, user_id, sold_symbol, buy_symbol, buy_price, buy_quantity):
+    cursor = connection.cursor(buffered=True)
+
+    if sold_symbol == 'USDT':
+        symbol = 'USDT'
+    elif sold_symbol == 'BUSD':
+        symbol = 'BUSD'
+    else:
+        symbol = "USDT"
+
+    try:
+        cursor.execute("SELECT wallet_quantity,pk_wallet FROM wallets WHERE(SELECT user_wallet FROM users WHERE user_id=%s) AND wallet_symbol=%s"
+                                   , (user_id, symbol,))
+        result = cursor.fetchone()
+        print(result)
+        if result:
+            if result[0] >= buy_quantity * buy_price:
+                withdraw_amount(connection, user_id, symbol, buy_quantity*buy_price)
+                return_val = json.loads(deposit_amount(connection, user_id, buy_symbol, buy_quantity))
+                return return_val
+    except Exception as E:
+        print("Error: {}".format(E))
+
+
+def sell_transaction(connection, user_id, buy_symbol, sold_symbol, sold_price, sold_quantity):
+
+    if buy_symbol == 'USDT':
+        symbol = 'USDT'
+    elif buy_symbol == 'BUSD':
+        symbol = 'BUSD'
+    else:
+        symbol = "USDT"
+
+    try:
+        cursor = connection.cursor(buffered=True)
+
+        cursor.execute(
+            "SELECT wallet_quantity,pk_wallet FROM wallets WHERE(SELECT user_wallet FROM users WHERE user_id=%s) AND wallet_symbol=%s"
+            , (user_id, sold_symbol,))
+        result = cursor.fetchone()
+        if result[0] >= sold_quantity:
+            withdraw_amount(connection, user_id, sold_symbol, sold_quantity)
+            return_val=json.loads(deposit_amount(connection, user_id, symbol, sold_quantity*sold_price))
+            return return_val
+    except Exception as E:
+        print("Error: {}".format(E))
 
 def check_order_database(connection, user_id):
     cursor = connection.cursor(buffered=True)
@@ -209,4 +256,4 @@ if __name__ == '__main__':
     #pprint.pprint(json.loads(withdraw_amount(cnx, '9EG18NMP0V', 'BNBTRX', 20)))
     #pprint.pprint(make_transaction(cnx,'9EG18NMP0V','BNB', 100 , 1, 'USDT'))
     #pprint.pprint(register_user(connection=cnx,username='Candas',password='12345'))
-    pprint.pprint(deposit_amount(connection=cnx,user_id='9EG18NMP0V',symbol='BNB',amount=1000))
+    pprint.pprint(deposit_amount(connection=cnx,user_id='9EG18NMP0V',symbol='USDT',amount=100000))

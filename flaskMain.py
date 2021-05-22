@@ -125,7 +125,7 @@ def open_limit_order():
                 return jsonify({'status': 'doesnt meet requirements'})
         elif side == SIDE_SELL:
             if (transaction_amount_cash >= 10.0) and quantity <= wallet_amount_asset and (quantity <= freeQty) and (quantity > minQty) \
-                    and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price) (price >= avg_price):
+                    and (quantity < maxQty) and (avg_price*multiplierUp >= price) and (avg_price*multiplierDown <= price) and (price >= avg_price):
                 order = client.create_order(
                     symbol=symbol,
                     side=side,
@@ -135,6 +135,13 @@ def open_limit_order():
                     price=price
                 )
                 pprint.pprint(order)
+                order_id = order['orderId']
+                print(order_id)
+                cursor = connection.cursor(buffered=True)
+                cursor.execute(
+                    "INSERT INTO transactions (fk_user_id,order_id,transaction_symbol) VALUES(%s,%s,%s)",
+                    (user_id, order_id, symbol))
+                connection.commit()
                 return jsonify({'status': 'order placed'})
             elif (avg_price*multiplierUp <= price) or (avg_price*multiplierDown >= price):
                 return jsonify({'status': 'PRICE FILTER ERROR'})
@@ -157,6 +164,7 @@ def open_market_order():
         asset = symbol[:-4]
         symbol_info = client.get_symbol_info(symbol)
 
+        user_id = request.form.get("user_id")
 
         print('symbol: ' + asset)
         balance = client.get_asset_balance(asset=asset)
@@ -192,6 +200,12 @@ def open_market_order():
                         quantity=quantity,
                     )
                     pprint.pprint(order)
+                    order_id = order['orderId']
+                    cursor = connection.cursor(buffered=True)
+                    cursor.execute(
+                        "INSERT INTO transactions (fk_user_id,order_id,transaction_symbol) VALUES(%s,%s,%s)",
+                        (user_id, order_id, symbol))
+                    connection.commit()
                     return jsonify({'status': 'order placed'})
                 else:
                     return jsonify({'status': 'must bid at least 10 dollar worth of coins'})
@@ -212,6 +226,12 @@ def open_market_order():
                         quantity=quantity,
                     )
                     pprint.pprint(order)
+                    order_id = order['orderId']
+                    cursor = connection.cursor(buffered=True)
+                    cursor.execute(
+                        "INSERT INTO transactions (fk_user_id,order_id,transaction_symbol) VALUES(%s,%s,%s)",
+                        (user_id, order_id, symbol))
+                    connection.commit()
                     return jsonify({'status': 'order placed'})
                 else:
                     return jsonify({'status': 'must bid at least 10 dollar worth of coins'})
@@ -252,8 +272,7 @@ def check_order_flask():
         if order['status'] == 'FILLED' and order['symbol'] == symbol and order['orderId'] == order_id:
             print('big if block entered')
             if order['side'] == 'BUY':
-                transaction = database.make_transaction(connection=connection, user_id=user_id, sold_symbol=cash,
-                                                        buy_quantity=quantity, buy_price=price, buy_symbol=asset)
+                transaction = database.buy_transaction(connection=connection, user_id=user_id, sold_symbol=cash, buy_symbol=asset,buy_price=price,buy_quantity=quantity)
                 if transaction:
                     cursor = connection.cursor(buffered=True)
                     cursor.execute('DELETE FROM transactions WHERE order_id=%s;',(order_id,))
@@ -262,8 +281,7 @@ def check_order_flask():
                 else:
                     print('transaction did not happened(buy)')
             elif order['side'] == 'SELL':
-                transaction = database.make_transaction(connection=connection, user_id=user_id, sold_symbol=asset,
-                                                        buy_quantity=quantity, buy_price=price, buy_symbol=cash)
+                transaction = database.sell_transaction(connection=connection, user_id=user_id, buy_symbol=cash,sold_symbol=asset,sold_price=price,sold_quantity=quantity)
                 if transaction:
                     cursor = connection.cursor(buffered=True)
                     cursor.execute('DELETE FROM transactions WHERE order_id=%s;', (order_id,))

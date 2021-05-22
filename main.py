@@ -64,7 +64,7 @@ avg_price = client.get_avg_price(symbol='BTCBUSD')
 
 #Account Endpoints
 #account_info = client.get_account()
-balance = client.get_asset_balance(asset='XRP')
+balance = client.get_asset_balance(asset='BUSD')
 #open order
 """order = client.create_order(
     symbol='BTCBUSD',
@@ -90,8 +90,8 @@ print("**********************************************")
 orders = client.get_all_orders(symbol='BTCBUSD')
 
 order = client.get_order(
-    symbol='BNBBUSD',
-    orderId='8981')
+    symbol='XRPBUSD',
+    orderId='42755')
 #delete order
 """result = client.cancel_order(
     symbol='BTCBUSD',
@@ -122,7 +122,7 @@ else:
     print("no")"""
 
 
-pprint.pprint(avg_price)
+pprint.pprint(order)
 
 """if order['fills'][0]:
     price = float(order['fills'][0]['price'])
