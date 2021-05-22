@@ -304,6 +304,12 @@ def check_price():
             our_price = coin['price']
             return jsonify({'price': our_price})
 
+@app.route('/getWallet', methods=['GET'])
+def get_wallet():
+    user_id = request.form.get("user_id")
+    wallet = database.get_wallet_amount(connection=connection,user_id=user_id)
+    return wallet
+
 
 @app.route('/login', methods=['POST'])
 def login():
