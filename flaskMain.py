@@ -295,6 +295,14 @@ def check_order_flask():
 
     return jsonify({'status': 'ALL TRANSACTIONS ARE DONE'})
 
+@app.route('/checkPrice', methods=['GET'])
+def check_price():
+    symbol = request.form.get("symbol")
+    allcoins_info = client.get_all_tickers()
+    for coin in allcoins_info:
+        if coin['symbol'] == symbol:
+            our_price = coin['price']
+            return jsonify({'price': our_price})
 
 
 @app.route('/login', methods=['POST'])
@@ -344,5 +352,3 @@ def change_pass():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(get_instant_price())

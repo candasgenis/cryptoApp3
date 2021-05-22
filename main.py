@@ -122,7 +122,7 @@ else:
     print("no")"""
 
 
-pprint.pprint(order)
+pprint.pprint(res)
 
 """if order['fills'][0]:
     price = float(order['fills'][0]['price'])
