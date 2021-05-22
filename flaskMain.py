@@ -310,6 +310,23 @@ def get_wallet():
     wallet = database.get_wallet_amount(connection=connection,user_id=user_id)
     return wallet
 
+@app.route('/deposit', methods=['POST'])
+def deposit():
+    user_id = request.form.get("user_id")
+    symbol = request.form.get("symbol")
+    amount = float(request.form.get("amount"))
+    deposit = database.deposit_amount(connection=connection,user_id=user_id,symbol=symbol,amount=amount)
+    print(deposit)
+    return deposit
+
+@app.route('/withdraw', methods=['POST'])
+def withdraw():
+    user_id = request.form.get("user_id")
+    symbol = request.form.get("symbol")
+    amount = float(request.form.get("amount"))
+    withdraw = database.withdraw_amount(connection=connection,user_id=user_id,symbol=symbol,amount=amount)
+    print(withdraw)
+    return withdraw
 
 @app.route('/login', methods=['POST'])
 def login():
