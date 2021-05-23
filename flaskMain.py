@@ -11,11 +11,13 @@ import config
 testnet_key = config.testnet_key
 testnet_secret_key = config.testnet_secret_key
 
+
 client = Client(testnet_key, testnet_secret_key, testnet=True)
 
 connection = database.connect_sql()
 
 app = Flask(__name__)
+app.secret_key = 'thisisournonsecretkey'
 
 @app.route('/openLimitOrder', methods=['POST'])
 def open_limit_order():
@@ -327,6 +329,11 @@ def withdraw():
     withdraw = database.withdraw_amount(connection=connection,user_id=user_id,symbol=symbol,amount=amount)
     print(withdraw)
     return withdraw
+
+@app.route('/dump_info', methods=['POST'])
+def dump_info():
+    user_id = request.form.get('user_id')
+    return json.loads(database.get_account_info(connection=connection,user_id=user_id))
 
 @app.route('/login', methods=['POST'])
 def login():

@@ -43,15 +43,20 @@ def connect_sql():
 def register_user(connection, username, password):
     try:
         cursor = connection.cursor()
-        user_id = id_generator(10, chars=string.ascii_uppercase + string.digits)
-        wallet_id = id_generator(10, chars=string.ascii_uppercase + string.digits)
-        pk_wallet = id_generator(10, chars=string.ascii_uppercase + string.digits)
-        cursor.execute("INSERT INTO users(user_id,user_name,user_pass,user_wallet)VALUES(%s,%s,%s,%s)",
-                       (user_id, username, password, wallet_id,))
-        connection.commit()
-        cursor.execute("INSERT INTO wallets(wallet_id,pk_wallet) VALUES(%s,%s)", (wallet_id,pk_wallet,))
-        connection.commit()
-        return json.dumps({"info": (user_id, wallet_id)})
+        cursor.execute("SELECT user_name FROM users WHERE user_name=%s",(username,))
+        result = cursor.fetchone()
+        if result:
+            return json.dumps({"info":"Already Exists"})
+        else:
+            user_id = id_generator(10, chars=string.ascii_uppercase + string.digits)
+            wallet_id = id_generator(10, chars=string.ascii_uppercase + string.digits)
+            pk_wallet = id_generator(10, chars=string.ascii_uppercase + string.digits)
+            cursor.execute("INSERT INTO users(user_id,user_name,user_pass,user_wallet)VALUES(%s,%s,%s,%s)",
+                           (user_id, username, password, wallet_id,))
+            connection.commit()
+            cursor.execute("INSERT INTO wallets(wallet_id,pk_wallet) VALUES(%s,%s)", (wallet_id,pk_wallet,))
+            connection.commit()
+            return json.dumps({"info": {'user_id':user_id, 'wallet_id':wallet_id}})
     except Exception as E:
         print("There is an error occured with (Make sure that you pass the connection object) : {}".format(E))
 
@@ -227,6 +232,20 @@ def sell_transaction(connection, user_id, buy_symbol, sold_symbol, sold_price, s
             return return_val
     except Exception as E:
         print("Error: {}".format(E))
+
+def get_account_info(connection, user_id):
+    cursor = connection.cursor(buffered=True)
+    coin_arr = []
+    cursor.execute("SELECT user_wallet,user_name FROM users WHERE user_id=%s", (user_id,))
+    result = cursor.fetchone()
+    wallet_id = result[0]
+    user_name = result[1]
+    print(wallet_id)
+    cursor.execute("SELECT wallet_symbol,wallet_quantity FROM wallets WHERE wallet_id=%s", (wallet_id,))
+    symbol_quantity = cursor.fetchall()
+    for symbol in symbol_quantity:
+        coin_arr.append({'symbol':symbol[0],'value':symbol[1]})
+    return json.dumps({'wallet_id': wallet_id , 'user_name': user_name, 'coins': coin_arr, 'user_id': user_id})
 
 def check_order_database(connection, user_id):
     cursor = connection.cursor(buffered=True)

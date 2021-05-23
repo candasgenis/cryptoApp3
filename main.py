@@ -56,7 +56,7 @@ res = client.get_exchange_info()
 #time_res = client.get_server_time()
 #status = client.get_system_status()
 symbol_info = client.get_symbol_info('BTCBUSD')
-allcoins_info = client.get_all_tickers()
+
 avg_price = client.get_avg_price(symbol='BTCBUSD')
 #prices = client.get_all_tickers()
 #orderbook_tickers = client.get_orderbook_tickers()
@@ -79,7 +79,7 @@ balance = client.get_asset_balance(asset='BUSD')
 pprint.pprint(price)"""
 print("************************************************")
 
-
+allcoins_info = client.get_all_tickers()
 """for coin in allcoins_info:
     if coin['symbol'] == 'XRPBUSD':
         our_price = coin['price']"""
